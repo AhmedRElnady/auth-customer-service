@@ -1,20 +1,17 @@
 module.exports = {
    server: {
-      port: 5000
+      port: 6000
    },
    db: {
-      name: 'soc-shop-admins'
+      name: 'soc-customers'
    },
    _acl: {
       roles: {
          SUPER_ADMIN: {
             resources: [
-               "/signup",
-               "/:id/approve",
-               "/:id/assign-shop",
-               "/:id/roles"
+               "/"
             ],
-            permissions: ["get, post, put, delete"]
+            permissions: ["get"]
          }
       }
    }
