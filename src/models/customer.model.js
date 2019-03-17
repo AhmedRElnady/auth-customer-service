@@ -1,29 +1,26 @@
 const mongoose = require('mongoose');
 
 const customerScheam = new mongoose.Schema({ 
-    name : { 
+    gatewayIDFK : { //ensure index
+        type: mongoose.Schema.Types.ObjectId,  // to populate accross databases
+        required: true
+    },
+     /*
+        I duplicate customer [name] attribute -intentionally- here in the customer service db,
+        as an example of data that frequently retrieved.
+        There are more than 4 other approaches as you mention in your notes.
+    */
+   name: {    
         type: String,
         required: true
     },
-    approved: {
-        type: Boolean, 
-        default: false
-    },
-    shopId:{
+    shops:[{
         type: mongoose.Schema.Types.ObjectId,
-        default: null
-    },
-    permissions: {
-        type: Object,
-        default: {
-            read: false,
-            edit: false,
-            delete: false
-        }
-    }
+        default: []
+    }]
 }, {timestamps: true });
 
-shopAdminScheam.set('toJSON', {
+customerScheam.set('toJSON', {
     transform: function (doc, ret, opt) {
         ret.id = ret._id;
 
@@ -34,6 +31,6 @@ shopAdminScheam.set('toJSON', {
 })
 
 
-const ShopAdmin = mongoose.model('ShopAdmin', shopAdminScheam);
+const Customer = mongoose.model('Customer', customerScheam);
 
-module.exports = ShopAdmin;
+module.exports = Customer;
