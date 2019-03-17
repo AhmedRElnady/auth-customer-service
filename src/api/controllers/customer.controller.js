@@ -4,71 +4,81 @@ const Customer = require('../../models/customer.model');
 const validate = require('../middlewares/validator');
 const authorize = require('../middlewares/aclAuthoirzation');
 
-// this resource is accessed internally from /signup route in gateway, to add details of admin's data in this service db.
+//////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////
+/*
+    APIs that called sync from other microServices 
+*/
 router.post('/signup', async (req, res, next) => {
-    try { 
-        
-        const createdShopAdmin = await ShopAdmin.create({
-            gatewayIDFK: req.body.GWUserID
+    try {
+        const createdCustomer = await Customer.create({
+            gatewayIDFK: req.body.GWUserID,
+            name: req.body.GWUserName
         });
 
-        res.status(201).send(createdShopAdmin);
+        res.status(201).send(createdCustomer);
+    } catch (e) {
+        // next(e);
+    }
+});
 
+
+router.get('/:gatewayUserId', async (req, res, next) => {
+    try {
+        const customerDetails = await Customer.findOne({ gatewayIDFK: req.params.gatewayUserId });
+        res.status(200).send(customerDetails);
     } catch (e) {
 
     }
 });
-/*
 
- this resource is accessed internally from /login route in gateway, to add details of admin's data in this service db.
- to get details of logged in admin, to add what you want to jwt, to decrease db hits
- But don't add roles to jwt. (admin UX and statless approach of jwt(revocation))
-*/
-router.get('/:gatewayUserId', async (req, res, next) => {
+
+router.post('/subscribe', async (req, res, next) => {
     try {
-        const shopAdminDetails = await ShopAdmin.findOne({ gatewayIDFK: req.params.gatewayUserId })
-        res.status(200).send(shopAdminDetails)
-    } catch (err) {
+        const GWCustomerID = req.body.GWCustomerID,
+            shopId = req.body.shopId;
+
+        const updatedCustomer = await Customer.findOneAndUpdate({gatewayIDFK: GWCustomerID}, {
+            $push: {
+                shops: shopId
+            }
+        }, {new: true});
+
+        res.status(200).send(updatedCustomer);
+    } catch (e) {
+
+    }
+})
+
+router.post('/unsubscribe', async (req, res, next) => {
+    try {
+        const GWCustomerID = req.body.GWCustomerID,
+            shopId = req.body.shopId;
+
+        const updatedCustomer = await Customer.findOneAndUpdate({gatewayIDFK: GWCustomerID}, {
+            $pull: {
+                shops: shopId
+            }
+        }, {new: true});
+
+        res.status(200).send(updatedCustomer);
+    } catch (e) {
 
     }
 });
+////////////////////////////////////////////////
+///////////////////////////////////////////////
 
-//////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////
 
-// all these routes allowed only by super-admin role
-router.post('/:id/approve', authorize(), async (req, res, next) => {
+router.get('/', authorize(), async(req, res, next) => {
     try {
-        console.log('$$$$$ msg from approve')
-
-    } catch(e) {
+        // toDo: pagination and show full customer's details from gateway
+        const customers = await Customer.find({})
+        console.log("In the Name Of ALLAH");
+        res.status(200).send(customers);
+    } catch (e) {
 
     }
-});
-
-router.delete('/:id/approve', authorize(), async (req, res, next) => {
-    try {
-
-    } catch(e) {
-
-    }
-});
-
-router.patch('/:id/assign-shop', authorize(), async (req, res, next) => {
-    try {
-
-    } catch(e) {
-
-    }
-});
-
-router.patch('/:id/roles', authorize(), async (req, res, next) => {
-    try {
-
-    } catch(e) {
-
-    }
-});
-
+})
 
 module.exports = router;    
